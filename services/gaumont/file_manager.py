@@ -9,65 +9,60 @@ import urllib.request
 
 import requests
 
+from google.cloud import storage
+
 
 def file_timestamp(name, file_name):
-    return file_name[len(name) + 1::][:-5]
+	return file_name[len(name) + 1::][:-5]
 
 
 def load_json(content_url):
-    ssl._create_default_https_context = ssl._create_unverified_context
-    with urllib.request.urlopen(content_url) as url:
-        return json.loads(url.read().decode())
+	ssl._create_default_https_context = ssl._create_unverified_context
+	with urllib.request.urlopen(content_url) as url:
+		return json.loads(url.read().decode())
 
 
 class FileManager:
+	instance = None
 
-    @staticmethod
-    def call(name, url, delay=604800):
-        dir_path = os.path.dirname(os.path.realpath(__file__))+'/json_files'
-        file_exists, timestamp, filename = FileManager.file_exists(name)
-        if not file_exists or int(time.time()) > (int(timestamp)+delay): # si le fichier n'existe pas ou date de plus d'une semaine
-            if file_exists and int(time.time()) > (int(timestamp)+delay):
-                FileManager.delete_file(os.path.join(dir_path, filename))
-            content = FileManager.create_file(url, name)
-            return content
-        else:
-            return FileManager.get_file_content(filename)
+	def __init__(self):
+		client = storage.Client()
+		self.bucket = client.get_bucket('cinerank-cloud.appspot.com')
 
-    @staticmethod
-    def file_exists(name):
-        rootdir = os.path.dirname(os.path.realpath(__file__)) + '/json_files'
-        regex = re.compile('(^' + name + '_[0-9]+\.json$)')
+	@staticmethod
+	def call(name, url, delay=604800):
+		if FileManager.instance is None:
+			FileManager.instance = FileManager()
 
-        for root, dirs, files in os.walk(rootdir):
-            for file in files:
-                if regex.match(file):
-                    return True, file_timestamp(name, file), file
-        return False, 0, None
+		file_exists, timestamp, blob = FileManager.instance.file_exists(name)
+		filename = name + "_" + str(int(time.time())) + ".json"
+		if not file_exists or int(time.time()) > (
+				int(timestamp) + delay):  # si le fichier n'existe pas ou date de plus d'une semaine
+			if file_exists and int(time.time()) > (int(timestamp) + delay):
+				blob.delete()
+			content = FileManager.instance.create_file(url, filename)
+			return content
+		else:
+			return FileManager.instance.get_file_content(blob)
 
-    @staticmethod
-    def delete_file(filename):
-        if filename is None:
-            return
-        os.remove(filename)
+	def file_exists(self, name):
+		regex = re.compile('(^' + name + '_[0-9]+\.json$)')
 
-    @staticmethod
-    def create_file(url, name):
-        headers = {'user-agent': 'cinerank'}
-        r = requests.get(url, headers=headers)
-        content = r.json()
+		for blob in self.bucket.list_blobs(prefix="json_files/"):
+			if regex.match(blob.name.replace('json_files/', '')):
+				return True, file_timestamp(name, blob.name.replace('json_files/', '')), blob
+		return False, 0, None
 
-        dir_path = os.path.dirname(os.path.realpath(__file__))+'/json_files'
-        filename = os.path.join(dir_path, name+"_"+str(int(time.time()))+".json")
-        with open(filename, 'w') as f:
-            json.dump(content, f)
+	def create_file(self, url, filename):
+		headers = {'user-agent': 'cinerank'}
+		r = requests.get(url, headers=headers)
+		content = r.content
 
-        return content
+		blob = self.bucket.blob('json_files/' + filename)
+		blob.upload_from_string(content)
 
-    @staticmethod
-    def get_file_content(filename):
-        dir_path = os.path.dirname(os.path.realpath(__file__))+'/json_files'
-        fname = os.path.join(dir_path, filename)
-        with open(fname, 'r') as f:
-            return json.load(f)
+		return r.json()
 
+	def get_file_content(self, blob):
+		print('get_file_content')
+		return json.loads(blob.download_as_string().decode('utf-8'))

@@ -20,7 +20,7 @@ class CronJobs:
 				processed_gaumont_films.append(film.id)
 				# si on a pas déjà l'id dans la DB
 				if Database.execute("""SELECT count(*) FROM movies where gaumont_id=%s""", (film.id,), 'one')[0] == 0:
-					tmdb_movie = TmdbMovie.search_film(film.name, film.sortie.year)
+					tmdb_movie = TmdbMovie.search_film(film.name.replace("La séance Il était une fois... ", ""), film.sortie.year)
 					if tmdb_movie is None:
 						continue
 					tmdb_id = tmdb_movie.id
