@@ -38,7 +38,8 @@ class CronJobs:
 							'one')
 				else:
 					movie_id, tmdb_id, allocine_id, imdb_id = Database.execute(
-						"""SELECT id, tmdb_id, allocine_id, imdb_id FROM movies where gaumont_id=%s""", (film.id,), 'one')
+						"""UPDATE movies SET to_display = TRUE WHERE gaumont_id = %s RETURNING id, tmdb_id, allocine_id, imdb_id""",
+						(film.id,), 'one')
 
 				movie = Movie(movie_id, tmdb_id, allocine_id, imdb_id)
 				movie.update_rates()
