@@ -35,10 +35,10 @@ class Cinema:
 		self.seances_days = {}
 
 		for f in Cinema.json_seances_day[self.id]:
-			self.seances_days[f] = []
+			self.seances_days[f] = set()
 			for day in Cinema.json_seances_day[self.id][f]['days']:
 				if Cinema.json_seances_day[self.id][f]['days'][day]['bookable']:
-					self.seances_days[f].append(day)
+					self.seances_days[f].add(day)
 
 		return self.seances_days[film_id]
 
@@ -52,17 +52,16 @@ class Cinema:
 		if film_id not in self.seances[self.id]:
 			self.seances[self.id][film_id] = {}
 
-		for day in self.get_seances_days(film_id):
-			self.seances[self.id][film_id][day] = FileManager.call("showtimes_" + self.id + '_' + film_id + '_' + day,
-																   "https://www.cinemaspathegaumont.com/api/show/" + film_id + "/showtimes/" + self.id + "/" + day,
-																   172800)
+		self.seances[self.id][film_id][day] = FileManager.call("showtimes_" + self.id + '_' + film_id + '_' + day,
+															   "https://www.cinemaspathegaumont.com/api/show/" + film_id + "/showtimes/" + self.id + "/" + day,
+															   172800)
 
 		return self.seances[self.id][film_id][day]
 
 	def get_all_seances(self, film_id):
 		seances = []
 		for day in self.get_seances_days(film_id):
-			seances.append(self.get_seances_by_day(film_id, day))
+			seances = seances + self.get_seances_by_day(film_id, day)
 
 		return seances
 
