@@ -5,6 +5,7 @@ from flask import Flask
 from cron_jobs import CronJobs
 from database import Database
 from services.gaumont.cinema import Cinema
+from services.gaumont.film_gaumont import FilmGaumont
 
 app = Flask(__name__)
 
@@ -48,6 +49,12 @@ def cinemas_rates(slug):
 		'poster_path': x[6],
 		'score': x[7],
 		'rates': {s: float(r) for s, r in x[8].items()}} for x in movies]})
+
+
+@app.route('/cinemas/<string:slug>/movies/<string:gaumont_id>/showtimes')
+def cinema_movie_showtimes(slug, gaumont_id):
+	movie = FilmGaumont.get_film(gaumont_id)
+	return json.dumps(movie.get_seances(slug))
 
 
 @app.route('/cinemas')

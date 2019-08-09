@@ -24,7 +24,7 @@ class FilmGaumont:
             return self.seances[cine_id]
 
         cine = Cinema.get_cinema(cine_id)
-        self.seances[cine_id] = cine.get_seances(film_id=self.id)
+        self.seances[cine_id] = cine.get_all_seances(self.id)
         return self.seances[cine_id]
 
     @staticmethod
