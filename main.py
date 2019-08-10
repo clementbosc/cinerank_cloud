@@ -57,6 +57,12 @@ def cinema_movie_showtimes(slug, gaumont_id):
 	return json.dumps(movie.get_seances(slug))
 
 
+@app.route('/cinemas/<string:slug>')
+def get_cinema(slug):
+	cinema = Cinema.get_cinema(slug)
+	return cinema.toJSON()
+
+
 @app.route('/cinemas')
 def get_cinemas():
 	return json.dumps([{

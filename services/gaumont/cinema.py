@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from dateutil.parser import parse
@@ -12,6 +13,8 @@ class Cinema:
 	json_seances = {}  # cine_id => film_id => days => showtimes
 	json_cinemas = None
 
+
+
 	def __init__(self, id, name, address, ville, lat, lng):
 		self.id = id
 		self.name = name
@@ -22,6 +25,10 @@ class Cinema:
 		self.seances_days = None  # film_id => days
 		self.seances = {}  # film_id => days => showtimes
 		self.films = None
+
+	def toJSON(self):
+		return json.dumps(self, default=lambda o: o.__dict__,
+						  sort_keys=True, indent=4)
 
 	def get_seances_days(self, film_id):
 		if self.seances_days is not None and film_id in self.seances_days:
