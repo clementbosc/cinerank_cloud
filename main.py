@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+from pytz import timezone
 
 from flask import Flask
 
@@ -6,6 +8,7 @@ from cron_jobs import CronJobs
 from database import Database
 from services.gaumont.cinema import Cinema
 from services.gaumont.film_gaumont import FilmGaumont
+from dateutil.parser import parse as parse_date
 
 app = Flask(__name__)
 
@@ -54,13 +57,22 @@ def cinemas_rates(slug):
 @app.route('/cinemas/<string:slug>/movies/<string:gaumont_id>/showtimes')
 def cinema_movie_showtimes(slug, gaumont_id):
 	movie = FilmGaumont.get_film(gaumont_id)
-	return json.dumps(movie.get_seances(slug))
+	return json.dumps(list(filter(
+		lambda x: parse_date(x['reservabilityEnd']) > datetime.now(timezone('UTC')) and x['status'] == 'available',
+		movie.get_seances(slug))))
 
 
 @app.route('/cinemas/<string:slug>')
 def get_cinema(slug):
 	cinema = Cinema.get_cinema(slug)
-	return cinema.toJSON()
+	return {
+		'id': cinema.id,
+		'name': cinema.name,
+		'address': cinema.address,
+		'ville': cinema.ville,
+		'lat': cinema.lat,
+		'lng': cinema.lng
+	}
 
 
 @app.route('/cinemas')

@@ -32,7 +32,7 @@ class FilmGaumont:
         if FilmGaumont.json_films is not None:
             return FilmGaumont.json_films
 
-        json_films = FileManager.call("shows", "https://www.cinemaspathegaumont.com/api/shows")['shows']
+        json_films = FileManager.call("shows", "https://www.cinemaspathegaumont.com/api/shows", delay=1*24*3600)['shows']
         FilmGaumont.json_films = []
 
         for f in json_films:

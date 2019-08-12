@@ -61,7 +61,7 @@ class Cinema:
 
 		self.seances[self.id][film_id][day] = FileManager.call("showtimes_" + self.id + '_' + film_id + '_' + day,
 															   "https://www.cinemaspathegaumont.com/api/show/" + film_id + "/showtimes/" + self.id + "/" + day,
-															   172800)
+															   delay=1*24*3600)
 
 		return self.seances[self.id][film_id][day]
 
@@ -79,7 +79,7 @@ class Cinema:
 		if self.id not in Cinema.json_seances_day:
 			Cinema.json_seances_day[self.id] = \
 			FileManager.call("shows_" + self.id, "https://www.cinemaspathegaumont.com/api/cinema/" + self.id + "/shows",
-							 172800)["shows"]
+							 delay=1*24*3600)["shows"]
 
 		self.films = []
 
